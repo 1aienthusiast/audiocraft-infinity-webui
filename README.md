@@ -15,7 +15,8 @@ Disables (hopefully) the gradio analytics.
 `git clone https://github.com/facebookresearch/audiocraft`
 4. Copy the webui.py to the directory of the Meta audiocraft repo
 `cp webui.py ./audiocraft/`
-
+5. Go to the directory
+`cd ./audiocraft/`
 ## Usage
 ```python webui.py```
 ## Models

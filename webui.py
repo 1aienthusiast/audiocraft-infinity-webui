@@ -6,8 +6,10 @@ import datetime
 import torchaudio
 from audiocraft.models import MusicGen
 from audiocraft.data.audio import audio_write
+from audiocraft.data.audio_utils import convert_audio
 import wave
 import contextlib
+import typing
 
 os.environ['GRADIO_ANALYTICS_ENABLED'] = 'False'
 MODEL = None
@@ -22,26 +24,58 @@ def load_model(version):
     print("Loading model", version)
     return MusicGen.get_pretrained(version)
 
+def generate_cmelody(descriptions: typing.List[str], melody_wavs: typing.Union[torch.Tensor, typing.List[typing.Optional[torch.Tensor]]],
+                     msr: int,prompt: torch.Tensor, psr:int,MODEL, progress: bool = False) -> torch.Tensor:
+        if isinstance(melody_wavs, torch.Tensor):
+            if melody_wavs.dim() == 2:
+                melody_wavs = melody_wavs[None]
+            if melody_wavs.dim() != 3:
+                raise ValueError("melody_wavs should have a shape [B, C, T].")
+            melody_wavs = list(melody_wavs)
+        else:
+            for melody in melody_wavs:
+                if melody is not None:
+                    assert melody.dim() == 2, "one melody in the list has the wrong number of dims."
+
+        melody_wavs = [
+            convert_audio(wav, msr, MODEL.sample_rate, MODEL.audio_channels)
+            if wav is not None else None
+            for wav in melody_wavs]
+
+        if prompt.dim() == 2:
+            prompt = prompt[None]
+        if prompt.dim() != 3:
+            raise ValueError("prompt should have 3 dimensions: [B, C, T] (C = 1).")
+        prompt = convert_audio(prompt, psr, MODEL.sample_rate, MODEL.audio_channels)
+        if descriptions is None:
+            descriptions = [None] * len(prompt)
+        attributes, prompt_tokens = MusicGen._prepare_tokens_and_attributes(MODEL,descriptions=descriptions, prompt=prompt,melody_wavs=melody_wavs)
+        assert prompt_tokens is not None
+        return MusicGen._generate_tokens(MODEL,attributes, prompt_tokens, progress)
+
 def initial_generate(melody_boolean, MODEL, text, melody, msr, continue_file, duration, cf_cutoff, sc_text):
     wav = None
     if continue_file:
         data_waveform, cfsr = (torchaudio.load(continue_file))
         wav = data_waveform.cuda()
-        sliding_window_seconds=0
+        cf_len=0
         with contextlib.closing(wave.open(continue_file,'r')) as f:
             frames = f.getnframes()
             rate = f.getframerate()
-            sliding_window_seconds = frames / float(rate)
-
+            cf_len = frames / float(rate)
         if wav.dim() == 2:
             wav = wav[None]
-        wav = wav[:, :, int(-cfsr * min(29,sliding_window_seconds,duration-1,cf_cutoff)):]
+        wav = wav[:, :, int(-cfsr * min(29,cf_len,duration-1,cf_cutoff)):]
         new_chunk= None
-        if not sc_text:
-            new_chunk = MODEL.generate_continuation(wav, prompt_sample_rate=cfsr,progress=False)
+        if not melody_boolean:
+            if not sc_text:
+                new_chunk = MODEL.generate_continuation(wav, prompt_sample_rate=cfsr,progress=False)
+            else:
+                new_chunk = MODEL.generate_continuation(wav, descriptions=[text], prompt_sample_rate=cfsr,progress=False)
+            wav = new_chunk
         else:
-            new_chunk = MODEL.generate_continuation(wav, descriptions=[text], prompt_sample_rate=cfsr,progress=False)
-        wav = new_chunk
+            new_chunk = generate_cmelody([text], melody, msr, wav, cfsr,MODEL, progress=False)
+            wav =new_chunk
     else:
         if melody_boolean:
             wav = MODEL.generate_with_chroma(
@@ -54,7 +88,8 @@ def initial_generate(melody_boolean, MODEL, text, melody, msr, continue_file, du
             wav = MODEL.generate(descriptions=[text], progress=False)
     return wav
 
-def generate(model, text, melody, duration, topk, topp, temperature, cfg_coef,base_duration, sliding_window_seconds, continue_file, cf_cutoff, sc_text):
+def generate(model, text, melody, duration, topk, topp, temperature, cfg_coef,base_duration,
+             sliding_window_seconds, continue_file, cf_cutoff, sc_text):
     final_length_seconds = duration
     descriptions = text
     global MODEL
@@ -125,7 +160,8 @@ with gr.Blocks(analytics_enabled=False) as demo:
             with gr.Row():
                 text = gr.Text(label="Input Text", interactive=True)
                 melody = gr.Audio(source="upload", type="numpy", label="Melody Condition (optional) SUPPORTS MELODY ONLY", interactive=True)
-                continue_file = gr.Audio(source="upload", type="filepath", label="Song to continue (optional) SUPPORTS ALL MODELS", interactive=True) 
+                continue_file = gr.Audio(source="upload", type="filepath",
+                                         label="Song to continue (optional) SUPPORTS ALL MODELS", interactive=True) 
 
             with gr.Row():
                 model = gr.Radio(["melody", "medium", "small", "large"], label="Model", value="melody", interactive=True)
@@ -146,7 +182,8 @@ with gr.Blocks(analytics_enabled=False) as demo:
             with gr.Row():
                 output = gr.Audio(label="Generated Music", type="filepath")
             
-    submit.click(generate, inputs=[model, text, melody, duration, topk, topp, temperature, cfg_coef,base_duration, sliding_window_seconds, continue_file, cf_cutoff, sc_text], outputs=[output])
+    submit.click(generate, inputs=[model, text, melody, duration, topk, topp, temperature,
+                                   cfg_coef,base_duration, sliding_window_seconds, continue_file, cf_cutoff, sc_text], outputs=[output])
     gr.Examples(
         fn=generate,
         examples=[

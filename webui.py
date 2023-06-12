@@ -176,7 +176,7 @@ with gr.Blocks(analytics_enabled=False) as demo:
                 temperature = gr.Number(label="Temperature", value=1.0, interactive=True)
                 cfg_coef = gr.Number(label="Classifier Free Guidance", value=3.0, interactive=True)
             with gr.Row():
-                sc_text = gr.Checkbox(label="Use text for song continuation.")
+                sc_text = gr.Checkbox(label="Use text for song continuation.", value=True)
             with gr.Row():
                 submit = gr.Button("Submit")
             with gr.Row():

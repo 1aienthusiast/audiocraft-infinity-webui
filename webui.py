@@ -1,12 +1,13 @@
 import os
 import torch
+from tempfile import NamedTemporaryFile
 import requests
 import datetime
 import torchaudio
 from audiocraft.models import MusicGen
 from audiocraft.data.audio import audio_write
-import wave ######
-import contextlib #############
+import wave
+import contextlib
 
 os.environ['GRADIO_ANALYTICS_ENABLED'] = 'False'
 MODEL = None
@@ -108,9 +109,10 @@ def generate(model, text, melody, duration, topk, topp, temperature, cfg_coef,ba
         wav = initial_generate(melody_boolean, MODEL, text, melody, msr, continue_file, duration, cf_cutoff)
 
     print(f"Final length: {wav.shape[2] / sr}s")
-
-    output = wav.detach().cpu().numpy()
-    return MODEL.sample_rate, output
+    output = wav.detach().cpu().float()[0]
+    with NamedTemporaryFile("wb", suffix=".wav", delete=False) as file:
+        audio_write(file.name, output, MODEL.sample_rate, strategy="loudness",loudness_headroom_db=16, add_suffix=False, loudness_compressor=True)
+    return file.name
 
 
 with gr.Blocks(analytics_enabled=False) as demo:
@@ -137,7 +139,7 @@ with gr.Blocks(analytics_enabled=False) as demo:
             with gr.Row():
                 submit = gr.Button("Submit")
             with gr.Row():
-                output = gr.Audio(label="Generated Music", type="numpy")
+                output = gr.Audio(label="Generated Music", type="filepath")
             
     submit.click(generate, inputs=[model, text, melody, duration, topk, topp, temperature, cfg_coef,base_duration, sliding_window_seconds, continue_file, cf_cutoff], outputs=[output])
     gr.Examples(

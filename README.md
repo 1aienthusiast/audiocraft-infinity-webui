@@ -18,9 +18,9 @@ Disables (hopefully) the gradio analytics.
 
 ## Usage
 ```python webui.py```
-## API
+## Models
 
-Meta provides a simple API and 4 pre-trained models. The pre trained models are:
+Meta provides 4 pre-trained models. The pre trained models are:
 - `small`: 300M model, text to music only - [🤗 Hub](https://huggingface.co/facebook/musicgen-small)
 - `medium`: 1.5B model, text to music only - [🤗 Hub](https://huggingface.co/facebook/musicgen-medium)
 - `melody`: 1.5B model, text to music and text+melody to music - [🤗 Hub](https://huggingface.co/facebook/musicgen-melody)

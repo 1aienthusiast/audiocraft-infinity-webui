@@ -13,6 +13,7 @@ torch>=2.0.0
 torchaudio>=2.0.0
 huggingface_hub
 tqdm
+temp
 transformers
 xformers
 demucs

@@ -7,12 +7,13 @@ Adds the ability to continue songs.
 Disables (hopefully) the gradio analytics.
 
 ## Installation
-
-1. Install the requirements:
+1. Clone the repo:
+`git clone https://github.com/1aienthusiast/audiocraft-infinity-webui.git`
+2. Install the requirements:
 `pip install -r requirements.txt`
-2. Clone the Meta audiocraft repo:
+3. Clone the Meta audiocraft repo:
 `git clone https://github.com/facebookresearch/audiocraft`
-3. Copy the webui.py to the directory of the Meta audiocraft repo
+4. Copy the webui.py to the directory of the Meta audiocraft repo
 `cp webui.py ./audiocraft/`
 
 ## Usage

@@ -22,7 +22,7 @@ def load_model(version):
     print("Loading model", version)
     return MusicGen.get_pretrained(version)
 
-def initial_generate(melody_boolean, MODEL, text, melody, msr, continue_file, duration, cf_cutoff):
+def initial_generate(melody_boolean, MODEL, text, melody, msr, continue_file, duration, cf_cutoff, sc_text):
     wav = None
     if continue_file:
         data_waveform, cfsr = (torchaudio.load(continue_file))
@@ -35,8 +35,12 @@ def initial_generate(melody_boolean, MODEL, text, melody, msr, continue_file, du
 
         if wav.dim() == 2:
             wav = wav[None]
-        wav = wav[:, :, int(-cfsr * min(25,sliding_window_seconds,duration,cf_cutoff)):]
-        new_chunk = MODEL.generate_continuation(wav, descriptions=[text], prompt_sample_rate=cfsr,progress=False)
+        wav = wav[:, :, int(-cfsr * min(29,sliding_window_seconds,duration-1,cf_cutoff)):]
+        new_chunk= None
+        if not sc_text:
+            new_chunk = MODEL.generate_continuation(wav, prompt_sample_rate=cfsr,progress=False)
+        else:
+            new_chunk = MODEL.generate_continuation(wav, descriptions=[text], prompt_sample_rate=cfsr,progress=False)
         wav = new_chunk
     else:
         if melody_boolean:
@@ -50,8 +54,7 @@ def initial_generate(melody_boolean, MODEL, text, melody, msr, continue_file, du
             wav = MODEL.generate(descriptions=[text], progress=False)
     return wav
 
-def generate(model, text, melody, duration, topk, topp, temperature, cfg_coef,base_duration, sliding_window_seconds, continue_file, cf_cutoff):
-    print(melody)
+def generate(model, text, melody, duration, topk, topp, temperature, cfg_coef,base_duration, sliding_window_seconds, continue_file, cf_cutoff, sc_text):
     final_length_seconds = duration
     descriptions = text
     global MODEL
@@ -96,7 +99,7 @@ def generate(model, text, melody, duration, topk, topp, temperature, cfg_coef,ba
         for i in range(iterations_required):
             print(f"Generating {i + 1}/{iterations_required}")
             if i == 0:
-                wav = initial_generate(melody_boolean, MODEL, text, melody, msr, continue_file,base_duration, cf_cutoff)
+                wav = initial_generate(melody_boolean, MODEL, text, melody, msr, continue_file,base_duration, cf_cutoff, sc_text)
                 wav = wav[:, :, :sr * sliding_window_seconds]
             else:
                 new_chunk=None
@@ -106,7 +109,7 @@ def generate(model, text, melody, duration, topk, topp, temperature, cfg_coef,ba
                 print(new_chunk)
                 wav = torch.cat((wav, new_chunk[:, :, -sr * sliding_window_seconds:]), dim=2)
     else:
-        wav = initial_generate(melody_boolean, MODEL, text, melody, msr, continue_file, duration, cf_cutoff)
+        wav = initial_generate(melody_boolean, MODEL, text, melody, msr, continue_file, duration, cf_cutoff, sc_text)
 
     print(f"Final length: {wav.shape[2] / sr}s")
     output = wav.detach().cpu().float()[0]
@@ -137,11 +140,13 @@ with gr.Blocks(analytics_enabled=False) as demo:
                 temperature = gr.Number(label="Temperature", value=1.0, interactive=True)
                 cfg_coef = gr.Number(label="Classifier Free Guidance", value=3.0, interactive=True)
             with gr.Row():
+                sc_text = gr.Checkbox(label="Use text for song continuation.")
+            with gr.Row():
                 submit = gr.Button("Submit")
             with gr.Row():
                 output = gr.Audio(label="Generated Music", type="filepath")
             
-    submit.click(generate, inputs=[model, text, melody, duration, topk, topp, temperature, cfg_coef,base_duration, sliding_window_seconds, continue_file, cf_cutoff], outputs=[output])
+    submit.click(generate, inputs=[model, text, melody, duration, topk, topp, temperature, cfg_coef,base_duration, sliding_window_seconds, continue_file, cf_cutoff, sc_text], outputs=[output])
     gr.Examples(
         fn=generate,
         examples=[
@@ -191,6 +196,8 @@ with gr.Blocks(analytics_enabled=False) as demo:
         Base duration of 30 seconds is recommended.
         
         Sliding window of 10/15/20 seconds is recommended.
+
+        When continuing songs, a continuing song cutoff of 5 seconds gives good results.
 
         Gradio analytics are disabled.
         """

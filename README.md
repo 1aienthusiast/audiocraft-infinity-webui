@@ -11,9 +11,11 @@ Disables (hopefully) the gradio analytics.
 ## Installation
 1. Clone the repo:
 `git clone https://github.com/1aienthusiast/audiocraft-infinity-webui.git`
-2. Install the requirements:
+2. Install pytorch:
+`pip install 'torch>=2.0'`
+3. Install the requirements:
 `pip install -r requirements.txt`
-3. Clone the Meta audiocraft repo inside the `repositories` folder:
+4. Clone the Meta audiocraft repo inside the `repositories` folder:
 ```
 cd repositories
 git clone https://github.com/facebookresearch/audiocraft

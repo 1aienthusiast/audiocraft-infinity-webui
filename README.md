@@ -4,6 +4,8 @@ Adds generation of songs with a length of over 30 seconds.
 
 Adds the ability to continue songs.
 
+Adds a seed.
+
 Disables (hopefully) the gradio analytics.
 
 ## Installation

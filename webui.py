@@ -1,5 +1,5 @@
 import contextlib
-import datetime
+from datetime import datetime
 import os
 import random
 import sys
@@ -12,7 +12,7 @@ import numpy as np
 import requests
 import torch
 import torchaudio
-
+from os.path import dirname, abspath
 from modules import shared
 
 sys.path.insert(0, str(Path("repositories/audiocraft")))
@@ -30,7 +30,7 @@ import gradio as gr
 requests.get = original_get
 
 
-first_run = True
+first_run = 0
 MODEL = None
 
 
@@ -129,10 +129,13 @@ def generate(model, text, melody, duration, topk, topp, temperature, cfg_coef, b
              sliding_window_seconds, continue_file, cf_cutoff, sc_text, seed):
     # seed workaround
     global first_run
-    if first_run:
-        first_run = False
+    if first_run == 0:
+        sys.stdout = open(os.devnull, 'w')
+        first_run+=1
         d = generate(model, "A", None, 1, topk, topp, temperature, 2, base_duration,
                      sliding_window_seconds, None, cf_cutoff, sc_text, seed)
+        first_run+=1
+        sys.stdout = sys.__stdout__
 
     final_length_seconds = duration
     descriptions = text
@@ -197,11 +200,18 @@ def generate(model, text, melody, duration, topk, topp, temperature, cfg_coef, b
         wav = initial_generate(melody_boolean, MODEL, text, melody, msr, continue_file, duration, cf_cutoff, sc_text)
 
     print(f"Final length: {wav.shape[2] / sr}s")
-    output = wav.detach().cpu().float()[0]
-    with NamedTemporaryFile("wb", suffix=".wav", delete=False) as file:
-        audio_write(file.name, output, MODEL.sample_rate, strategy="loudness", loudness_headroom_db=16, add_suffix=False, loudness_compressor=True)
-    set_seed(-1)
-    return file.name
+    file_name = ""
+    if first_run > 1:
+        output = wav.detach().cpu().float()[0]
+        now = datetime.now()
+        d = dirname(abspath(__file__))
+        file_name = d+"/results/"+ now.strftime("%Y%m%d_%H%M%S") + ".wav"
+        with NamedTemporaryFile("wb", suffix=".wav", delete=False) as file:
+            audio_write(d+"/results/"+ now.strftime("%Y%m%d_%H%M%S") + ".wav", output, MODEL.sample_rate, strategy="loudness",loudness_headroom_db=16, add_suffix=False, loudness_compressor=True)
+        set_seed(-1)
+        print(file_name)
+    return file_name
+
 
 
 with gr.Blocks(analytics_enabled=False) as demo:

@@ -122,6 +122,8 @@ def generate(model, text, melody, duration, topk, topp, temperature, cfg_coef,ba
         d = generate(model, "A", None, 1, topk, topp, temperature, 2,base_duration,
              sliding_window_seconds, None, cf_cutoff, sc_text, seed)
     #
+
+        
     final_length_seconds = duration
     descriptions = text
     global MODEL
@@ -172,9 +174,13 @@ def generate(model, text, melody, duration, topk, topp, temperature, cfg_coef,ba
             else:
                 new_chunk=None
                 previous_chunk = wav[:, :, -sr * (base_duration - sliding_window_seconds):]
-                print(previous_chunk)
-                new_chunk = MODEL.generate_continuation(previous_chunk, descriptions=[text], prompt_sample_rate=sr,progress=False)
-                print(new_chunk)
+                if continue_file:
+                    if not sc_text:
+                        new_chunk = MODEL.generate_continuation(previous_chunk, prompt_sample_rate=sr,progress=False)
+                    else:
+                        new_chunk = MODEL.generate_continuation(previous_chunk, descriptions=[text], prompt_sample_rate=sr,progress=False)
+                else:
+                    new_chunk = MODEL.generate_continuation(previous_chunk, descriptions=[text], prompt_sample_rate=sr,progress=False)
                 wav = torch.cat((wav, new_chunk[:, :, -sr * sliding_window_seconds:]), dim=2)
     else:
         wav = initial_generate(melody_boolean, MODEL, text, melody, msr, continue_file, duration, cf_cutoff, sc_text)
@@ -277,3 +283,5 @@ with gr.Blocks(analytics_enabled=False) as demo:
 
 
 demo.launch()
+
+

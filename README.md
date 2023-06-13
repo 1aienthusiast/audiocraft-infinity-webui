@@ -13,17 +13,17 @@ Disables (hopefully) the gradio analytics.
 `git clone https://github.com/1aienthusiast/audiocraft-infinity-webui.git`
 2. Install the requirements:
 `pip install -r requirements.txt`
-3. Clone the Meta audiocraft repo:
-`git clone https://github.com/facebookresearch/audiocraft`
-4. Copy the webui.py to the directory of the Meta audiocraft repo
-`cp webui.py ./audiocraft/`
-5. Go to the audiocraft directory
-`cd ./audiocraft/`
+3. Clone the Meta audiocraft repo inside the `repositories` folder:
+```
+cd repositories
+git clone https://github.com/facebookresearch/audiocraft
+cd ..
+```
 ## Usage
 ```python webui.py```
 
 ## Updating
-**Don't forget to copy the webui.py after pulling this repo, occasionally pull the audiocraft repo aswell.**
+Run `git pull` inside the root folder to update the webui, and the same command inside `repositories/audiocraft` to update audiocraft.
 
 ## Models
 

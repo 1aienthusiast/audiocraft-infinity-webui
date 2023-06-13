@@ -10,7 +10,11 @@ from audiocraft.data.audio_utils import convert_audio
 import wave
 import contextlib
 import typing
+import os
+import random
+import numpy as np
 
+first_run = True
 os.environ['GRADIO_ANALYTICS_ENABLED'] = 'False'
 MODEL = None
 def my_get(url, **kwargs):
@@ -23,6 +27,27 @@ requests.get = original_get
 def load_model(version):
     print("Loading model", version)
     return MusicGen.get_pretrained(version)
+
+
+def set_seed(seed : int = 0):
+    original_seed = seed
+    if seed == -1:
+        torch.backends.cudnn.deterministic = False
+        torch.backends.cudnn.benchmark = True
+    else:
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False
+        print("seed: "+ str(seed))
+    if seed <= 0:
+        seed = np.random.default_rng().integers(1, 2**32 - 1)
+    assert 0 < seed < 2**32
+    np.random.seed(seed)
+    random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    os.environ["PYTHONHASHSEED"] = str(seed)
+    
+    return original_seed if original_seed != 0 else seed
 
 def generate_cmelody(descriptions: typing.List[str], melody_wavs: typing.Union[torch.Tensor, typing.List[typing.Optional[torch.Tensor]]],
                      msr: int,prompt: torch.Tensor, psr:int,MODEL, progress: bool = False) -> torch.Tensor:
@@ -89,11 +114,20 @@ def initial_generate(melody_boolean, MODEL, text, melody, msr, continue_file, du
     return wav
 
 def generate(model, text, melody, duration, topk, topp, temperature, cfg_coef,base_duration,
-             sliding_window_seconds, continue_file, cf_cutoff, sc_text):
+             sliding_window_seconds, continue_file, cf_cutoff, sc_text, seed):
+    #seed workaround
+    global first_run
+    if first_run:
+        first_run = False
+        d = generate(model, "A", None, 1, topk, topp, temperature, 2,base_duration,
+             sliding_window_seconds, None, cf_cutoff, sc_text, seed)
+    #
     final_length_seconds = duration
     descriptions = text
     global MODEL
     topk = int(topk)
+    int_seed = int(seed)
+    set_seed(int_seed)
     if MODEL is None or MODEL.name != model:
         MODEL = load_model(model)
     if duration > 30:
@@ -115,7 +149,6 @@ def generate(model, text, melody, duration, topk, topp, temperature, cfg_coef,ba
             duration=duration,
         )
     iterations_required = int(final_length_seconds / sliding_window_seconds)
-    
     print(f"Iterations required: {iterations_required}")
     sr = MODEL.sample_rate
     print(f"Sample rate: {sr}")
@@ -150,6 +183,7 @@ def generate(model, text, melody, duration, topk, topp, temperature, cfg_coef,ba
     output = wav.detach().cpu().float()[0]
     with NamedTemporaryFile("wb", suffix=".wav", delete=False) as file:
         audio_write(file.name, output, MODEL.sample_rate, strategy="loudness",loudness_headroom_db=16, add_suffix=False, loudness_compressor=True)
+    set_seed(-1)
     return file.name
 
 
@@ -166,7 +200,7 @@ with gr.Blocks(analytics_enabled=False) as demo:
             with gr.Row():
                 model = gr.Radio(["melody", "medium", "small", "large"], label="Model", value="melody", interactive=True)
             with gr.Row():
-                duration = gr.Slider(minimum=1, maximum=300, value=60, label="Duration", interactive=True)
+                duration = gr.Slider(minimum=1, maximum=300, value=30, label="Duration", interactive=True)
                 base_duration = gr.Slider(minimum=1, maximum=30, value=30, label="Base duration", interactive=True)
                 sliding_window_seconds=gr.Slider(minimum=1, maximum=30, value=15, label="Sliding window", interactive=True)
                 cf_cutoff=gr.Slider(minimum=1, maximum=30, value=15, label="Continuing song cutoff", interactive=True)
@@ -177,13 +211,14 @@ with gr.Blocks(analytics_enabled=False) as demo:
                 cfg_coef = gr.Number(label="Classifier Free Guidance", value=3.0, interactive=True)
             with gr.Row():
                 sc_text = gr.Checkbox(label="Use text for song continuation.", value=True)
+                seed = gr.Number(label="seed", value=-1, interactive=True)
             with gr.Row():
                 submit = gr.Button("Submit")
             with gr.Row():
                 output = gr.Audio(label="Generated Music", type="filepath")
             
     submit.click(generate, inputs=[model, text, melody, duration, topk, topp, temperature,
-                                   cfg_coef,base_duration, sliding_window_seconds, continue_file, cf_cutoff, sc_text], outputs=[output])
+                                   cfg_coef,base_duration, sliding_window_seconds, continue_file, cf_cutoff, sc_text, seed], outputs=[output])
     gr.Examples(
         fn=generate,
         examples=[
@@ -239,9 +274,6 @@ with gr.Blocks(analytics_enabled=False) as demo:
         Gradio analytics are disabled.
         """
     )
-
-
-
 
 
 demo.launch()

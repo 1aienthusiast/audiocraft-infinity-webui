@@ -37,7 +37,6 @@ def set_seed(seed : int = 0):
     else:
         torch.backends.cudnn.deterministic = True
         torch.backends.cudnn.benchmark = False
-        print("seed: "+ str(seed))
     if seed <= 0:
         seed = np.random.default_rng().integers(1, 2**32 - 1)
     assert 0 < seed < 2**32
@@ -47,7 +46,7 @@ def set_seed(seed : int = 0):
     torch.cuda.manual_seed_all(seed)
     os.environ["PYTHONHASHSEED"] = str(seed)
     
-    return original_seed if original_seed != 0 else seed
+    return original_seed if original_seed > 0 else seed
 
 def generate_cmelody(descriptions: typing.List[str], melody_wavs: typing.Union[torch.Tensor, typing.List[typing.Optional[torch.Tensor]]],
                      msr: int,prompt: torch.Tensor, psr:int,MODEL, progress: bool = False) -> torch.Tensor:
@@ -129,7 +128,8 @@ def generate(model, text, melody, duration, topk, topp, temperature, cfg_coef,ba
     global MODEL
     topk = int(topk)
     int_seed = int(seed)
-    set_seed(int_seed)
+    cur_seed = set_seed(int_seed)
+    print("seed: " + str(cur_seed))
     if MODEL is None or MODEL.name != model:
         MODEL = load_model(model)
     if duration > 30:
@@ -283,5 +283,3 @@ with gr.Blocks(analytics_enabled=False) as demo:
 
 
 demo.launch()
-
-

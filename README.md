@@ -21,6 +21,10 @@ Disables (hopefully) the gradio analytics.
 `cd ./audiocraft/`
 ## Usage
 ```python webui.py```
+
+## Updating
+**Don't forget to copy the webui.py after pulling this repo, occasionally pull the audiocraft repo aswell.**
+
 ## Models
 
 Meta provides 4 pre-trained models. The pre trained models are:

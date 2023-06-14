@@ -9,6 +9,8 @@ Adds a seed option.
 Disables (hopefully) the gradio analytics.
 
 ## Installation
+Python 3.9 is recommended.
+
 1. Clone the repo:
 `git clone https://github.com/1aienthusiast/audiocraft-infinity-webui.git`
 2. Install pytorch:

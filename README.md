@@ -17,12 +17,21 @@ Python 3.9 is recommended.
 `pip install 'torch>=2.0'`
 3. Install the requirements:
 `pip install -r requirements.txt`
-4. Clone the Meta audiocraft repo inside the `repositories` folder:
+4. Clone my fork of the Meta audiocraft repo inside the `repositories` folder:
 ```
 cd repositories
 git clone https://github.com/1aienthusiast/audiocraft
 cd ..
 ```
+## Note!
+If you already cloned the Meta audiocraft repo you have to remove it then clone the provided fork.
+```
+cd repositories
+rm -rf audiocraft/
+git clone git clone https://github.com/1aienthusiast/audiocraft
+cd ..
+```
+
 ## Usage
 ```python webui.py```
 

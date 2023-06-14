@@ -49,13 +49,13 @@ def set_seed(seed: int = 0):
         torch.backends.cudnn.benchmark = False
     if seed <= 0:
         seed = np.random.default_rng().integers(1, 2**32 - 1)
+    seed = np.uint32(seed).item()
     assert 0 < seed < 2**32
     np.random.seed(seed)
     random.seed(seed)
     torch.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
     os.environ["PYTHONHASHSEED"] = str(seed)
-
     return original_seed if original_seed > 0 else seed
 
 
@@ -200,7 +200,7 @@ def generate(model, text, melody, duration, topk, topp, temperature, cfg_coef, b
         wav = initial_generate(melody_boolean, MODEL, text, melody, msr, continue_file, duration, cf_cutoff, sc_text)
 
     print(f"Final length: {wav.shape[2] / sr}s")
-    file_name = ""
+    file_name = None
     if first_run > 1:
         output = wav.detach().cpu().float()[0]
         now = datetime.now()
@@ -208,8 +208,8 @@ def generate(model, text, melody, duration, topk, topp, temperature, cfg_coef, b
         file_name = d+"/results/"+ now.strftime("%Y%m%d_%H%M%S") + ".wav"
         with NamedTemporaryFile("wb", suffix=".wav", delete=False) as file:
             audio_write(d+"/results/"+ now.strftime("%Y%m%d_%H%M%S") + ".wav", output, MODEL.sample_rate, strategy="loudness",loudness_headroom_db=16, add_suffix=False, loudness_compressor=True)
-        set_seed(-1)
         print(file_name)
+    set_seed(-1)
     return file_name
 
 

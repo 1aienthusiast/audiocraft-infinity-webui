@@ -296,7 +296,7 @@ with gr.Blocks(analytics_enabled=False) as demo:
 
         Sliding window of 10/15/20 seconds is recommended.
 
-        When continuing songs, a continuing song cutoff of 5 seconds gives good results.
+        When continuing songs, a continuing song cutoff of 5 seconds gives good results. Continuing song cutoff - number of seconds to be taken from the end of the continuing song.
 
         Gradio analytics are disabled.
         """

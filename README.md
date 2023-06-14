@@ -24,7 +24,7 @@ git clone https://github.com/1aienthusiast/audiocraft
 cd ..
 ```
 ## Note!
-If you already cloned the Meta audiocraft repo you have to remove it then clone the provided fork for the seed option to work
+If you already cloned the Meta audiocraft repo you have to remove it then clone the provided fork for the seed option to work.
 ```
 cd repositories
 rm -rf audiocraft/

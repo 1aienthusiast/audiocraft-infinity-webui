@@ -20,7 +20,7 @@ Python 3.9 is recommended.
 4. Clone the Meta audiocraft repo inside the `repositories` folder:
 ```
 cd repositories
-git clone https://github.com/facebookresearch/audiocraft
+git clone https://github.com/1aienthusiast/audiocraft
 cd ..
 ```
 ## Usage

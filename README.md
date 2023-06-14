@@ -52,7 +52,7 @@ I recommend 12GB of VRAM for the large model.
 
 ## Colab
 
-For google colab you need to replace `demo.launch()` with `demo.queue().launch(share=True)` in webui.py
+For google colab you need to use the `--share` flag.
 
 ## License
 * The code in this repository is released under the AGPLv3 license as found in the [LICENSE file](LICENSE).

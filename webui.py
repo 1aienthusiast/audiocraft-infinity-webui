@@ -44,23 +44,19 @@ def load_model(version):
 
 
 def set_seed(seed: int = 0):
-    original_seed = seed
-    if seed == -1:
-        torch.backends.cudnn.deterministic = False
-        torch.backends.cudnn.benchmark = True
-    else:
-        torch.backends.cudnn.deterministic = True
-        torch.backends.cudnn.benchmark = False
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
     if seed <= 0:
         seed = np.random.default_rng().integers(1, 2**32 - 1)
     seed = np.uint32(seed).item()
     assert 0 < seed < 2**32
+    original_seed = seed
     np.random.seed(seed)
     random.seed(seed)
     torch.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
     os.environ["PYTHONHASHSEED"] = str(seed)
-    return original_seed if original_seed > 0 else seed
+    return original_seed
 
 
 def generate_cmelody(descriptions: typing.List[str], melody_wavs: typing.Union[torch.Tensor, typing.List[typing.Optional[torch.Tensor]]],

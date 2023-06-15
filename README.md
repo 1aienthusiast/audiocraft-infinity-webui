@@ -6,6 +6,8 @@ Adds the ability to continue songs.
 
 Adds a seed option.
 
+Adds ability to load models locally downloaded models.
+
 Disables (hopefully) the gradio analytics.
 
 ## Installation

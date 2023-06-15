@@ -30,13 +30,17 @@ import gradio as gr
 requests.get = original_get
 
 
-first_run = 0
 MODEL = None
 
 
 def load_model(version):
     print("Loading model", version)
-    return MusicGen.get_pretrained(version)
+    path=dirname(abspath(__file__))+"/models/" + version + "/"
+    if os.path.exists(path):
+        model = MusicGen.get_pretrained(directory=path,name=version)
+
+    else: model = MusicGen.get_pretrained(name=version)
+    return model
 
 
 def set_seed(seed: int = 0):
@@ -127,25 +131,18 @@ def initial_generate(melody_boolean, MODEL, text, melody, msr, continue_file, du
 
 def generate(model, text, melody, duration, topk, topp, temperature, cfg_coef, base_duration,
              sliding_window_seconds, continue_file, cf_cutoff, sc_text, seed):
-    # seed workaround
-    global first_run
-    if first_run == 0:
-        sys.stdout = open(os.devnull, 'w')
-        first_run+=1
-        d = generate(model, "A", None, 1, topk, topp, temperature, 2, base_duration,
-                     sliding_window_seconds, None, cf_cutoff, sc_text, seed)
-        first_run+=1
-        sys.stdout = sys.__stdout__
+    global MODEL
+    if MODEL is None or MODEL.name != model:
+        MODEL = load_model(model)
 
     final_length_seconds = duration
     descriptions = text
-    global MODEL
+
     topk = int(topk)
     int_seed = int(seed)
     cur_seed = set_seed(int_seed)
     print("seed: " + str(cur_seed))
-    if MODEL is None or MODEL.name != model:
-        MODEL = load_model(model)
+
     if duration > 30:
         MODEL.set_generation_params(
             use_sampling=True,
@@ -200,15 +197,14 @@ def generate(model, text, melody, duration, topk, topp, temperature, cfg_coef, b
         wav = initial_generate(melody_boolean, MODEL, text, melody, msr, continue_file, duration, cf_cutoff, sc_text)
 
     print(f"Final length: {wav.shape[2] / sr}s")
-    file_name = None
-    if first_run > 1:
-        output = wav.detach().cpu().float()[0]
-        now = datetime.now()
-        d = dirname(abspath(__file__))
-        file_name = d+"/results/"+ now.strftime("%Y%m%d_%H%M%S") + "-" +str(cur_seed)+".wav"
-        with NamedTemporaryFile("wb", suffix=".wav", delete=False) as file:
-            audio_write(file_name, output, MODEL.sample_rate, strategy="loudness",loudness_headroom_db=16, add_suffix=False, loudness_compressor=True)
-        print(file_name)
+    output = wav.detach().cpu().float()[0]
+    now = datetime.now()
+    d = dirname(abspath(__file__))
+    file_name = d + "/results/" + now.strftime("%Y%m%d_%H%M%S") + "-" + str(cur_seed) + ".wav"
+    with NamedTemporaryFile("wb", suffix=".wav", delete=False) as file:
+        audio_write(file_name, output, MODEL.sample_rate, strategy="loudness", loudness_headroom_db=16,
+                    add_suffix=False, loudness_compressor=True)
+    print(file_name)
     set_seed(-1)
     return file_name
 

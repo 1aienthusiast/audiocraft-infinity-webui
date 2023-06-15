@@ -205,9 +205,9 @@ def generate(model, text, melody, duration, topk, topp, temperature, cfg_coef, b
         output = wav.detach().cpu().float()[0]
         now = datetime.now()
         d = dirname(abspath(__file__))
-        file_name = d+"/results/"+ now.strftime("%Y%m%d_%H%M%S") + ".wav"
+        file_name = d+"/results/"+ now.strftime("%Y%m%d_%H%M%S") + "-" +str(cur_seed)+".wav"
         with NamedTemporaryFile("wb", suffix=".wav", delete=False) as file:
-            audio_write(d+"/results/"+ now.strftime("%Y%m%d_%H%M%S") + ".wav", output, MODEL.sample_rate, strategy="loudness",loudness_headroom_db=16, add_suffix=False, loudness_compressor=True)
+            audio_write(file_name, output, MODEL.sample_rate, strategy="loudness",loudness_headroom_db=16, add_suffix=False, loudness_compressor=True)
         print(file_name)
     set_seed(-1)
     return file_name

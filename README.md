@@ -6,7 +6,7 @@ Adds the ability to continue songs.
 
 Adds a seed option.
 
-Adds ability to load models locally downloaded models.
+Adds ability to load locally downloaded models.
 
 Disables (hopefully) the gradio analytics.
 
@@ -30,7 +30,7 @@ If you already cloned the Meta audiocraft repo you have to remove it then clone 
 ```
 cd repositories
 rm -rf audiocraft/
-git clone git clone https://github.com/1aienthusiast/audiocraft
+git clone https://github.com/1aienthusiast/audiocraft
 cd ..
 ```
 

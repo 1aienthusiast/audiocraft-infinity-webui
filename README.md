@@ -10,6 +10,8 @@ Adds ability to load locally downloaded models.
 
 ### Adds training (Thanks to chavinlo's repo https://github.com/chavinlo/musicgen_trainer)
 
+Adds MacOS support. 
+
 Disables (hopefully) the gradio analytics.
 
 ## Installation

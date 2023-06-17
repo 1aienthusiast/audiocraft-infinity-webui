@@ -15,6 +15,12 @@ import torch
 import torchaudio
 from os.path import dirname, abspath
 from modules import shared, ui
+cuda = True
+#check for mps
+if torch.backends.mps.is_available():
+    mps_device = torch.device("mps")
+    x = torch.ones(1, device=mps_device)
+    cuda = False
 
 sys.path.insert(0, str(Path("repositories/audiocraft")))
 sys.path.insert(0, str(Path("repositories/musicgen_trainer")))
@@ -63,7 +69,8 @@ def set_seed(seed: int = 0):
     np.random.seed(seed)
     random.seed(seed)
     torch.manual_seed(seed)
-    torch.cuda.manual_seed_all(seed)
+    if cuda:
+        torch.cuda.manual_seed_all(seed)
     os.environ["PYTHONHASHSEED"] = str(seed)
     return original_seed
 
@@ -102,7 +109,10 @@ def initial_generate(melody_boolean, MODEL, text, melody, msr, continue_file, du
     wav = None
     if continue_file:
         data_waveform, cfsr = (torchaudio.load(continue_file))
-        wav = data_waveform.cuda()
+        if cuda:
+            wav = data_waveform.cuda()
+        else:
+            wav = data_waveform.mps_device()
         cf_len = 0
         with contextlib.closing(wave.open(continue_file, 'r')) as f:
             frames = f.getnframes()
@@ -254,10 +264,10 @@ with gr.Blocks(analytics_enabled=False) as demo:
                     directory_name= gr.Text(label="Finetuned DIRECTORY_NAME", interactive=True)
                     finetuned_on = gr.Radio(["small", "medium", "large"], label="FINETUNED_ON model", value="small", interactive=True)
                 with gr.Row():
-                    duration = gr.Slider(minimum=1, maximum=300, value=30, label="Duration", interactive=True)
-                    base_duration = gr.Slider(minimum=1, maximum=30, value=30, label="Base duration", interactive=True)
-                    sliding_window_seconds = gr.Slider(minimum=1, maximum=30, value=15, label="Sliding window", interactive=True)
-                    cf_cutoff = gr.Slider(minimum=1, maximum=30, value=15, label="Continuing song cutoff", interactive=True)
+                    duration = gr.Slider(minimum=1, maximum=300, value=30,step=1, label="Duration", interactive=True)
+                    base_duration = gr.Slider(minimum=1, maximum=30, value=30, step=1, label="Base duration", interactive=True)
+                    sliding_window_seconds = gr.Slider(minimum=1, maximum=30, value=15, step=1, label="Sliding window", interactive=True)
+                    cf_cutoff = gr.Slider(minimum=1, maximum=30, value=15, step=1, label="Continuing song cutoff", interactive=True)
                 with gr.Row():
                     topk = gr.Number(label="Top-k", value=250, interactive=True)
                     topp = gr.Number(label="Top-p", value=0, interactive=True)
@@ -308,23 +318,23 @@ with gr.Blocks(analytics_enabled=False) as demo:
                 gr.Markdown(
                     """
                     This is a webui for MusicGen with 30+ second generation support.
-            
+
                     Models
                     1. Melody -- a music generation model capable of generating music condition on text and melody inputs. **Note**, you can also use text only.
                     2. Small -- a 300M transformer decoder conditioned on text only.
                     3. Medium -- a 1.5B transformer decoder conditioned on text only.
                     4. Large -- a 3.3B transformer decoder conditioned on text only (might OOM for the longest sequences.) - recommended for continuing songs
-            
+
                     When the optional melody conditioning wav is provided, the model will extract
                     a broad melody and try to follow it in the generated samples. Only the first chunk of the song will
                     be generated with melody conditioning, the others will just continue on the first chunk.
-            
+
                     Base duration of 30 seconds is recommended.
-            
+
                     Sliding window of 10/15/20 seconds is recommended.
-            
+
                     When continuing songs, a continuing song cutoff of 5 seconds gives good results. Continuing song cutoff - number of seconds to be taken from the end of the continuing song.
-            
+
                     Gradio analytics are disabled.
                     """
                 )
@@ -348,14 +358,14 @@ with gr.Blocks(analytics_enabled=False) as demo:
         gr.Markdown(
             """
             # Training
-            
+
             Model gets saved to models/ as `lm_final.pt`
             ### Using the finetuned model
-            
+
             1) Place it in models/DIRECTORY_NAME/
-            2) In the Inference tab choose `custom` as the model and enter DIRECTORY_NAME into the input field. 
+            2) In the Inference tab choose `custom` as the model and enter DIRECTORY_NAME into the input field.
             3) In the Inference tab choose the model it was finetuned on
-            
+
             ### Options
 
             - `dataset_path` path to your dataset with WAV and TXT pairs.

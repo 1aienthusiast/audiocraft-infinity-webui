@@ -8,6 +8,8 @@ Adds a seed option.
 
 Adds ability to load locally downloaded models.
 
+### Adds training (Thanks to chavinlo's repo https://github.com/chavinlo/musicgen_trainer)
+
 Disables (hopefully) the gradio analytics.
 
 ## Installation
@@ -31,6 +33,7 @@ If you already cloned the Meta audiocraft repo you have to remove it then clone 
 cd repositories
 rm -rf audiocraft/
 git clone https://github.com/1aienthusiast/audiocraft
+git clone https://github.com/chavinlo/musicgen_trainer
 cd ..
 ```
 

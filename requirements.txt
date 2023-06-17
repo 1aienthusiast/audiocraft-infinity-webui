@@ -19,6 +19,6 @@ xformers
 demucs
 librosa
 requests
-gradio
+gradio==3.34.0
 contextlib2
 wave

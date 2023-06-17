@@ -86,6 +86,7 @@ Once training finishes, the model (and checkpoints) will be available under the 
 ![](https://i.imgur.com/Mu19EPb.png)
 
 ### Loading the finetuned models
+Model gets saved to models/ as `lm_final.pt`
 
 1) Place it in models/DIRECTORY_NAME/
 2) In the Inference tab choose `custom` as the model and enter DIRECTORY_NAME into the input field. 

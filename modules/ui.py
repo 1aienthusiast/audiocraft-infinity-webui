@@ -1,5 +1,13 @@
+import requests
+import os
+os.environ['GRADIO_ANALYTICS_ENABLED'] = 'False'
+def my_get(url, **kwargs):
+    kwargs.setdefault('allow_redirects', True)
+    return requests.api.request('get', 'http://127.0.0.1/', **kwargs)
+original_get = requests.get
+requests.get = my_get
 import gradio as gr
-
+requests.get = original_get
 refresh_symbol = '\U0001f504'
 
 class ToolButton(gr.Button, gr.components.FormComponent):

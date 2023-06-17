@@ -15,16 +15,12 @@ import torch
 import torchaudio
 from os.path import dirname, abspath
 from modules import shared, ui
-
+cuda = True
 #check for mps
 if torch.backends.mps.is_available():
     mps_device = torch.device("mps")
     x = torch.ones(1, device=mps_device)
-    print (x)
-else:
-    print ("MPS device not found.")
-
-
+    cuda = False
 
 sys.path.insert(0, str(Path("repositories/audiocraft")))
 sys.path.insert(0, str(Path("repositories/musicgen_trainer")))
@@ -73,8 +69,8 @@ def set_seed(seed: int = 0):
     np.random.seed(seed)
     random.seed(seed)
     torch.manual_seed(seed)
-    # cuda messes up MACOS devices
-    # torch.cuda.manual_seed_all(seed)
+    if cuda:
+        torch.cuda.manual_seed_all(seed)
     os.environ["PYTHONHASHSEED"] = str(seed)
     return original_seed
 
@@ -113,7 +109,10 @@ def initial_generate(melody_boolean, MODEL, text, melody, msr, continue_file, du
     wav = None
     if continue_file:
         data_waveform, cfsr = (torchaudio.load(continue_file))
-        wav = data_waveform.mps_device()
+        if cuda:
+            wav = data_waveform.cuda()
+        else:
+            wav = data_waveform.mps_device()
         cf_len = 0
         with contextlib.closing(wave.open(continue_file, 'r')) as f:
             frames = f.getnframes()
@@ -268,7 +267,6 @@ with gr.Blocks(analytics_enabled=False) as demo:
                     duration = gr.Slider(minimum=1, maximum=300, value=30,step=1, label="Duration", interactive=True)
                     base_duration = gr.Slider(minimum=1, maximum=30, value=30, step=1, label="Base duration", interactive=True)
                     sliding_window_seconds = gr.Slider(minimum=1, maximum=30, value=15, step=1, label="Sliding window", interactive=True)
-                    #cf_cutoff throws error with non int numbers and possibly other sliders too
                     cf_cutoff = gr.Slider(minimum=1, maximum=30, value=15, step=1, label="Continuing song cutoff", interactive=True)
                 with gr.Row():
                     topk = gr.Number(label="Top-k", value=250, interactive=True)

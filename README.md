@@ -25,6 +25,7 @@ Python 3.9 is recommended.
 ```
 cd repositories
 git clone https://github.com/1aienthusiast/audiocraft
+git clone https://github.com/chavinlo/musicgen_trainer
 cd ..
 ```
 ## Note!

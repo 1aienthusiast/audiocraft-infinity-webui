@@ -64,6 +64,8 @@ Create a folder, in it, place your audio and caption files. **They must be WAV a
 
 ![](https://i.imgur.com/AlDlqBI.png)
 
+**Place the folder in `training/datasets/`.**
+
 ### Important: Split your audios in 35 second chunks. Only the first 30 seconds will be processed. Audio cannot be less than 30 seconds.
 
 In this example, segment_000.txt contains the caption "jazz music, jobim" for wav file segment_000.wav

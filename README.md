@@ -20,7 +20,7 @@ Disables (hopefully) the gradio analytics.
 Python 3.9 is recommended.
 
 1. Clone the repo:
-`git clone https://github.com/1aienthusiast/audiocraft-infinity-webui.git`
+`git clone https://github.com/1aienthusiast/audiocraft-infinity-webui.git -b main-queue`
 2. Install pytorch:
 `pip install 'torch>=2.0'`
 3. Install the requirements:

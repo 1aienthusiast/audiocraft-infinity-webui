@@ -8,11 +8,12 @@ import wave
 import glob
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-
+import time
 import numpy as np
 import requests
 import torch
 import torchaudio
+import threading
 from os.path import dirname, abspath
 from modules import shared, ui
 cuda = True
@@ -41,6 +42,37 @@ requests.get = original_get
 
 MODEL = None
 current_directory = dirname(abspath(__file__))
+
+demo = gr.Blocks(analytics_enabled=False)
+output = None
+gen_inputs=[]
+generations = 0
+files = []
+audio_list_html = ""
+
+
+def queue():
+    global generations
+    global audio_list_html
+    global files
+    while True:
+        time.sleep(0.1)
+        if(len(gen_inputs)>generations):
+            global output
+            n=gen_inputs[generations]
+            d = generate(n[0],n[1],n[2],n[3],n[4],n[5],n[6],n[7],n[8],n[9],n[10],n[11],n[12],n[13],n[14],n[15])
+            files.append(d)
+            generations+=1
+            files.reverse()
+            files = files[0:10]
+            audio_list_html = "<br>".join([
+                f'''
+                        <div>{os.path.splitext(os.path.basename(file))[0]}</div>
+                        <audio controls style=" width : 100%;"><source src="/file={file}" type="audio/wav"></audio>
+                    '''
+                for file in files
+            ])
+            files.reverse()
 
 def load_model(version, DIRECTORY_NAME, FINETUNED_ON):
     if version != "custom":
@@ -223,6 +255,10 @@ def generate(model, text, melody, duration, topk, topp, temperature, cfg_coef, b
     set_seed(-1)
     return file_name
 
+def add_queue(model, text, melody, duration, topk, topp, temperature, cfg_coef, base_duration,
+             sliding_window_seconds, continue_file, cf_cutoff, sc_text, seed, directory_name,finetuned_on):
+    gen_inputs.append([model, text, melody, duration, topk, topp, temperature, cfg_coef, base_duration,
+             sliding_window_seconds, continue_file, cf_cutoff, sc_text, seed, directory_name,finetuned_on])
 def get_datasets(path: str, ext: str):
     return ['None'] + glob(current_directory)
 
@@ -248,7 +284,10 @@ def train_local(dataset_path: str,
         save_step=save_step,
     )
 
-with gr.Blocks(analytics_enabled=False) as demo:
+def get_audio_list():
+    global audio_list_html
+    return audio_list_html
+with demo:
     with gr.Tab("Inference"):
         gr.Markdown("""# MusicGen Inference""")
         with gr.Row():
@@ -278,11 +317,15 @@ with gr.Blocks(analytics_enabled=False) as demo:
                     seed = gr.Number(label="seed", value=-1, interactive=True)
                 with gr.Row():
                     submit = gr.Button("Submit")
-                with gr.Row():
-                    output = gr.Audio(label="Generated Music", type="filepath")
+                refresh = gr.Button("Refresh")
 
-                submit.click(generate, inputs=[model, text, melody, duration, topk, topp, temperature,
-                                               cfg_coef, base_duration, sliding_window_seconds, continue_file, cf_cutoff, sc_text, seed,directory_name,finetuned_on], outputs=[output])
+                with gr.Row():
+                    #output = gr.Audio(label="Generated Music", type="filepath")
+                    output = gr.HTML()
+
+                refresh.click(fn=get_audio_list, inputs=[], outputs=[output])
+                submit.click(add_queue, inputs=[model, text, melody, duration, topk, topp, temperature,
+                                               cfg_coef, base_duration, sliding_window_seconds, continue_file, cf_cutoff, sc_text, seed,directory_name,finetuned_on])
                 gr.Examples(
                     fn=generate,
                     examples=[
@@ -378,7 +421,8 @@ with gr.Blocks(analytics_enabled=False) as demo:
             Gradio analytics are disabled.
             """
         )
-
+x = threading.Thread(target=queue)
+x.start()
 if shared.args.listen:
     demo.launch(share=shared.args.share, server_name=shared.args.listen_host or '0.0.0.0', server_port=shared.args.listen_port, inbrowser=shared.args.auto_launch)
 else:

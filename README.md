@@ -12,6 +12,8 @@ Adds ability to load locally downloaded models.
 
 Adds MacOS support. 
 
+Adds queue (on the main-queue branch: https://github.com/1aienthusiast/audiocraft-infinity-webui/tree/main-queue)
+
 Disables (hopefully) the gradio analytics.
 
 ## Installation

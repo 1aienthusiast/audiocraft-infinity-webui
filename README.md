@@ -12,6 +12,8 @@ Adds ability to load locally downloaded models.
 
 Adds MacOS support. 
 
+Adds queue (This branch)
+
 Disables (hopefully) the gradio analytics.
 
 ## Installation

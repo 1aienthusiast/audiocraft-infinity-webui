@@ -18,6 +18,8 @@ Batching (**run webuibatch.py instead of webui.py**)
 
 Disables (hopefully) the gradio analytics.
 
+## Note! Project is currently not actively maintained but accepts PRs.
+
 ## Installation
 Python 3.9 is recommended.
 

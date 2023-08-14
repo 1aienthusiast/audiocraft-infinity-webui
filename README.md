@@ -14,6 +14,8 @@ Adds MacOS support.
 
 Adds queue (on the main-queue branch: https://github.com/1aienthusiast/audiocraft-infinity-webui/tree/main-queue)
 
+Batching (**run webuibatch.py instead of webui.py**)
+
 Disables (hopefully) the gradio analytics.
 
 ## Installation
@@ -44,6 +46,7 @@ cd ..
 
 ## Usage
 ```python webui.py```
+```python webuibatch.py``` - with batching support
 
 ## Updating
 Run `git pull` inside the root folder to update the webui, and the same command inside `repositories/audiocraft` to update audiocraft.
